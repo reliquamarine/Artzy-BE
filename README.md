@@ -35,7 +35,7 @@ Bikin database baru, namain `artzy_db`
 
 Bikin tabel-tabel yang diperlukan di query:
 
-```
+```env
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(50) NOT NULL,
