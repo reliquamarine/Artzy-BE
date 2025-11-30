@@ -1,4 +1,4 @@
-// backend/index.js
+// backend/index.js 
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({ origin: "http://localhost:5173" }));
-app.use(express.json({ limit: "10mb" })); // penting buat upload gambar yang sekiranya gede
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // DB Connection
@@ -33,9 +33,7 @@ pool.connect((err) => {
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
-
   if (!token) return res.status(401).json({ error: "Need token!" });
-
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: "Token invalid/expired" });
     req.user = user; // { id: xx }
@@ -64,7 +62,7 @@ app.post("/api/auth/register", async (req, res) => {
     res.status(201).json({ message: "Register Succes!", user: result.rows[0] });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" }); 
   }
 });
 
@@ -98,7 +96,7 @@ app.post("/api/auth/login", async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" }); 
   }
 });
 
@@ -111,7 +109,7 @@ app.get("/api/auth/me", authenticateToken, async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: "Failed to get profile!" });
+    return res.status(500).json({ error: "Failed to get profile!" }); 
   }
 });
 
@@ -121,15 +119,15 @@ app.put("/api/users/profile", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE users 
-       SET first_name = $1, last_name = $2, username = $3, email = $4, profile_pic = $5 
-       WHERE id = $6 
-       RETURNING id, username, email, first_name, last_name, profile_pic`,
+        SET first_name = $1, last_name = $2, username = $3, email = $4, profile_pic = $5 
+        WHERE id = $6 
+        RETURNING id, username, email, first_name, last_name, profile_pic`,
       [first_name, last_name, username, email, profile_pic, req.user.id]
     );
     res.json({ message: "Profile updated!", user: result.rows[0] });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to update profile!" });
+    return res.status(500).json({ error: "Failed to update profile!" }); 
   }
 });
 
@@ -139,9 +137,9 @@ app.post("/api/artworks", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
       `INSERT INTO artworks 
-       (user_id, image, title, artist, year, category, description) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) 
-       RETURNING *`,
+        (user_id, image, title, artist, year, category, description) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7) 
+        RETURNING *`,
       [
         req.user.id,
         image,
@@ -155,7 +153,7 @@ app.post("/api/artworks", authenticateToken, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to save artwork!" });
+    return res.status(500).json({ error: "Failed to save artwork!" }); 
   }
 });
 
@@ -168,7 +166,7 @@ app.get("/api/artworks", authenticateToken, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: "Failed to get gallery!" });
+    return res.status(500).json({ error: "Failed to get gallery!" }); 
   }
 });
 
@@ -183,7 +181,7 @@ app.get("/api/artworks/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Artwork not found!" });
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" }); 
   }
 });
 
@@ -196,11 +194,50 @@ app.delete("/api/artworks/:id", authenticateToken, async (req, res) => {
     ]);
     res.json({ message: "Artwork deleted!" });
   } catch (err) {
-    res.status(500).json({ error: "Failed to delete!" });
+    return res.status(500).json({ error: "Failed to delete!" }); 
   }
 });
 
-// 9. FORGOT PASSWORD (simpel dulu pake console.log link)
+// 9. UPDATE ARTWORK (ROUTE BARU)
+app.put("/api/artworks/:id", authenticateToken, async (req, res) => {
+  const { image, title, artist, year, category, description } = req.body;
+  const { id } = req.params; 
+
+  try {
+    const result = await pool.query(
+      `UPDATE artworks 
+            SET image = $1, title = $2, artist = $3, year = $4, category = $5, description = $6 
+            WHERE id = $7 AND user_id = $8
+            RETURNING *`,
+      [
+        image,
+        title,
+        artist,
+        year || null,
+        category,
+        description || null,
+        id,
+        req.user.id,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Artwork not found or unauthorized" });
+    }
+
+    res.json({
+      message: "Artwork updated successfully!",
+      artwork: result.rows[0],
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Failed to update artwork!" });
+  }
+});
+
+// 10. FORGOT PASSWORD
 app.post("/api/auth/forgot-password", async (req, res) => {
   const { email } = req.body;
   try {
@@ -214,7 +251,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "15m",
     });
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetLink = http://localhost:5173/reset-password/${resetToken};
 
     console.log("Reset link (manual copy to browser):", resetLink);
     // Nanti bisa pake nodemailer buat kirim email beneran
@@ -223,7 +260,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
       message: "Reset link has been sent to console (see backend terminal)",
     });
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -232,5 +269,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT} yah.`);
+  console.log(Backend running on http://localhost:${PORT} yah.);
 });
