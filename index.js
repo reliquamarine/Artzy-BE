@@ -1,4 +1,5 @@
-// backend/index.js 
+// backend/index.js (Kode Revisi Penuh)
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -33,7 +34,9 @@ pool.connect((err) => {
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+
   if (!token) return res.status(401).json({ error: "Need token!" });
+
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: "Token invalid/expired" });
     req.user = user; // { id: xx }
@@ -198,7 +201,7 @@ app.delete("/api/artworks/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// 9. UPDATE ARTWORK (ROUTE BARU)
+// 9. UPDATE ARTWORK 
 app.put("/api/artworks/:id", authenticateToken, async (req, res) => {
   const { image, title, artist, year, category, description } = req.body;
   const { id } = req.params; 
@@ -251,7 +254,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "15m",
     });
-    const resetLink = http://localhost:5173/reset-password/${resetToken};
+    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
 
     console.log("Reset link (manual copy to browser):", resetLink);
     // Nanti bisa pake nodemailer buat kirim email beneran
@@ -269,5 +272,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(Backend running on http://localhost:${PORT} yah.);
+  console.log(`Backend running on http://localhost:${PORT} yah.`);
 });
