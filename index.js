@@ -1,5 +1,3 @@
-// backend/index.js (Kode Revisi Penuh)
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -65,7 +63,7 @@ app.post("/api/auth/register", async (req, res) => {
     res.status(201).json({ message: "Register Succes!", user: result.rows[0] });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Server error" }); 
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -99,7 +97,7 @@ app.post("/api/auth/login", async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ error: "Server error" }); 
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -112,7 +110,7 @@ app.get("/api/auth/me", authenticateToken, async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    return res.status(500).json({ error: "Failed to get profile!" }); 
+    return res.status(500).json({ error: "Failed to get profile!" });
   }
 });
 
@@ -130,7 +128,7 @@ app.put("/api/users/profile", authenticateToken, async (req, res) => {
     res.json({ message: "Profile updated!", user: result.rows[0] });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Failed to update profile!" }); 
+    return res.status(500).json({ error: "Failed to update profile!" });
   }
 });
 
@@ -156,7 +154,7 @@ app.post("/api/artworks", authenticateToken, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Failed to save artwork!" }); 
+    return res.status(500).json({ error: "Failed to save artwork!" });
   }
 });
 
@@ -169,7 +167,7 @@ app.get("/api/artworks", authenticateToken, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    return res.status(500).json({ error: "Failed to get gallery!" }); 
+    return res.status(500).json({ error: "Failed to get gallery!" });
   }
 });
 
@@ -184,7 +182,7 @@ app.get("/api/artworks/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Artwork not found!" });
     res.json(result.rows[0]);
   } catch (err) {
-    return res.status(500).json({ error: "Server error" }); 
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -197,14 +195,14 @@ app.delete("/api/artworks/:id", authenticateToken, async (req, res) => {
     ]);
     res.json({ message: "Artwork deleted!" });
   } catch (err) {
-    return res.status(500).json({ error: "Failed to delete!" }); 
+    return res.status(500).json({ error: "Failed to delete!" });
   }
 });
 
-// 9. UPDATE ARTWORK 
+// 9. UPDATE ARTWORK
 app.put("/api/artworks/:id", authenticateToken, async (req, res) => {
   const { image, title, artist, year, category, description } = req.body;
-  const { id } = req.params; 
+  const { id } = req.params;
 
   try {
     const result = await pool.query(
